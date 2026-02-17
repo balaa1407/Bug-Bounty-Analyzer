@@ -96,6 +96,16 @@ docker compose up --build
 - API docs: http://localhost:8000/docs
 - Dashboard: http://localhost:8501
 
+### Makefile Shortcuts
+
+```bash
+make up       # start all services in background with build
+make ps       # list running services
+make logs     # tail service logs
+make down     # stop services
+make clean    # stop and remove volumes
+```
+
 ## API Endpoints
 
 - `POST /analyze`

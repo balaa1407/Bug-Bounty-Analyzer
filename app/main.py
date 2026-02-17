@@ -35,6 +35,17 @@ def health_check():
     return {"status": "ok", "storage_mode": storage_mode()}
 
 
+@app.get("/")
+def root():
+    return {
+        "service": settings.app_name,
+        "status": "running",
+        "docs": "/docs",
+        "health": "/health",
+        "analyze_endpoint": "/analyze",
+    }
+
+
 @app.post("/analyze")
 async def analyze(pdf: UploadFile = File(...),
                   screenshot1: UploadFile = File(...),
