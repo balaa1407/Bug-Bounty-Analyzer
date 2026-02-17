@@ -1,0 +1,9 @@
+{
+  "vulnerability_type": "sql injection",
+  "affected_asset": "payment",
+  "authentication_required": false,
+  "user_interaction_required": false,
+  "environment": "production",
+  "impact_description": "Exposes payment data and allows unauthorized record extraction.",
+  "steps_to_reproduce": "Submit crafted SQL payload in checkout search endpoint."
+}

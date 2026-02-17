@@ -1,0 +1,21 @@
+Title: SQL Injection in Payment Checkout Endpoint
+
+Vulnerability Type: SQL Injection
+Affected Asset: Payment API
+Authentication: No authentication required
+User Interaction: No user interaction required
+Environment: Production
+
+Impact:
+An attacker can extract payment records and customer metadata from the production database. This can lead to fraud, privacy violations, and regulatory exposure.
+
+Steps to Reproduce:
+1. Send POST request to /api/checkout/search with payload: {"query":"' UNION SELECT card_number, email FROM payments --"}
+2. Observe response contains sensitive customer data.
+3. Repeat with OFFSET to dump additional rows.
+
+Proof of Concept:
+Include screenshot of crafted request and server response.
+
+Suggested Fix:
+Use parameterized queries and strict input validation.

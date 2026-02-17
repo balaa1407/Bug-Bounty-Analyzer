@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "BugBountyReport",
+  "type": "object",
+  "required": [
+    "report_id",
+    "created_at",
+    "file_names",
+    "extracted_fields",
+    "ocr_signals",
+    "feature_vector",
+    "score_breakdown",
+    "severity",
+    "severity_explanation",
+    "remediation",
+    "quality"
+  ],
+  "properties": {
+    "report_id": { "type": "string" },
+    "created_at": { "type": "string" },
+    "file_names": {
+      "type": "object",
+      "properties": {
+        "pdf": { "type": "string" },
+        "screenshot1": { "type": "string" },
+        "screenshot2": { "type": "string" }
+      }
+    },
+    "extracted_fields": {
+      "type": "object",
+      "properties": {
+        "vulnerability_type": { "type": "string" },
+        "affected_asset": { "type": "string" },
+        "authentication_required": { "type": "boolean" },
+        "user_interaction_required": { "type": "boolean" },
+        "environment": { "type": "string" },
+        "impact_description": { "type": "string" },
+        "steps_to_reproduce": { "type": "string" }
+      }
+    },
+    "ocr_signals": {
+      "type": "object",
+      "properties": {
+        "database_exposure": { "type": "boolean" },
+        "error_messages": { "type": "boolean" },
+        "sensitive_data": { "type": "boolean" },
+        "admin_panels": { "type": "boolean" },
+        "raw_text": { "type": "string" }
+      }
+    },
+    "feature_vector": { "type": "object" },
+    "score_breakdown": {
+      "type": "object",
+      "properties": {
+        "technical_impact": { "type": "number" },
+        "exploitability": { "type": "number" },
+        "business_impact": { "type": "number" },
+        "total_score": { "type": "number" }
+      }
+    },
+    "severity": { "enum": ["Low", "Medium", "High", "Critical"] },
+    "severity_explanation": { "type": "string" },
+    "remediation": { "type": "array", "items": { "type": "string" } },
+    "quality": { "type": "object" }
+  }
+}
