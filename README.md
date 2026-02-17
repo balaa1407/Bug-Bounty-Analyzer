@@ -14,6 +14,7 @@ MVP project that simulates internal bug bounty triage workflows used by platform
 - Remediation suggestions based on vulnerability type.
 - Persistence and analytics: MongoDB-backed storage with fallback in-memory mode.
 - Dashboard: Streamlit trends, critical reports, and common attack types.
+- Single-page UI: reporter upload form with admin-only analysis visibility.
 
 ## Project Structure
 
@@ -95,6 +96,34 @@ docker compose up --build
 - API: http://localhost:8000
 - API docs: http://localhost:8000/docs
 - Dashboard: http://localhost:8501
+
+## Simple Uploader (No Admin)
+
+If you want a minimal tool to upload a PDF and up to two screenshots and get the score without any admin/auth:
+
+1. Ensure the API is running (via Docker above or `uvicorn`). Default: `http://localhost:8000`.
+2. Install dependencies:
+
+```bash
+pip install -r requirements.txt
+```
+
+3. Start the simple uploader:
+
+```bash
+streamlit run dashboard/simple_uploader.py
+```
+
+4. In the web UI, upload your PDF (required) and optionally up to two screenshots, then click Analyze. The severity and score breakdown will be displayed.
+
+Environment:
+- Set `API_BASE_URL` if your API is not on `http://localhost:8000`.
+
+### Single-Page Workflow
+
+- Reporter side: upload 1 PDF + 2 screenshots from the dashboard submission form.
+- Admin side: login in the same page using `ADMIN_PANEL_PASSWORD` to view detailed results and analytics.
+- By design, detailed analysis output is visible only after admin authentication.
 
 ### Makefile Shortcuts
 
