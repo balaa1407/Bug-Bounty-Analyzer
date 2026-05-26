@@ -96,7 +96,8 @@ def ocr_image_bytes(image_bytes: bytes) -> str:
 
 	try:
 		image = Image.open(BytesIO(image_bytes))
-	except UnidentifiedImageError:
+		return pytesseract.image_to_string(image) or ""
+	except Exception as exc:
+		import sys
+		print(f"WARNING: OCR extraction failed (is Tesseract OCR installed?): {exc}", file=sys.stderr)
 		return ""
-
-	return pytesseract.image_to_string(image) or ""
