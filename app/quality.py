@@ -9,9 +9,14 @@ def assess_report_quality(extracted_fields: dict, screenshot_count: int) -> dict
     if reproducibility < 25:
         notes.append("Reproduction guidance is too short.")
 
-    screenshot_quality = 25 if screenshot_count >= 2 else 10
-    if screenshot_count < 2:
-        notes.append("At least 2 screenshots are expected.")
+    if screenshot_count >= 2:
+        screenshot_quality = 25
+    elif screenshot_count == 1:
+        screenshot_quality = 18
+        notes.append("Adding a second screenshot is recommended to improve visual evidence.")
+    else:
+        screenshot_quality = 10
+        notes.append("No screenshots provided; visual proof of concept is highly recommended.")
 
     impact_clarity = 25 if len(extracted_fields.get("impact_description", "")) > 80 else 10
     if impact_clarity < 25:
