@@ -48,30 +48,34 @@ def root():
 
 @app.post("/analyze")
 async def analyze(pdf: UploadFile = File(...),
-                  screenshot1: UploadFile = File(...),
-                  screenshot2: UploadFile = File(...)):
+                  screenshot1: UploadFile | None = None,
+                  screenshot2: UploadFile | None = None):
     try:
         await validate_files(pdf, screenshot1, screenshot2)
 
         extracted_fields = await parse_pdf_report(pdf)
         _ensure_required_report_fields(extracted_fields)
 
-        ocr_signals = await extract_ocr_signals([screenshot1, screenshot2])
+        screenshots = [s for s in [screenshot1, screenshot2] if s is not None]
+        ocr_signals = await extract_ocr_signals(screenshots)
         feature_vector = to_feature_vector(extracted_fields, ocr_signals)
 
         score_payload = calculate_risk(extracted_fields, ocr_signals)
-        quality = assess_report_quality(extracted_fields, screenshot_count=2)
+        quality = assess_report_quality(extracted_fields, screenshot_count=len(screenshots))
         remediation = suggest_remediation(extracted_fields.get("vulnerability_type", "unknown"))
 
         report_id = str(uuid4())
+        
+        file_names = {"pdf": pdf.filename}
+        if screenshot1:
+            file_names["screenshot1"] = screenshot1.filename
+        if screenshot2:
+            file_names["screenshot2"] = screenshot2.filename
+
         record = {
             "report_id": report_id,
             "created_at": datetime.now(timezone.utc),
-            "file_names": {
-                "pdf": pdf.filename,
-                "screenshot1": screenshot1.filename,
-                "screenshot2": screenshot2.filename,
-            },
+            "file_names": file_names,
             "extracted_fields": extracted_fields,
             "ocr_signals": ocr_signals,
             "feature_vector": feature_vector,
