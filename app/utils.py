@@ -42,8 +42,8 @@ USER_INTERACTION_KEYWORDS = [
 ]
 
 SECTION_PATTERNS = {
-	"impact": r"impact\s*:\s*(.+?)(?:steps to reproduce|reproduction|proof of concept|$)",
-	"steps": r"(?:steps to reproduce|reproduction)\s*:\s*(.+?)(?:impact|mitigation|$)",
+	"impact": r"(?:#*\s*|\b)impact\b\s*:?\s*(.+?)(?:steps to reproduce|reproduction|proof of concept|$)",
+	"steps": r"(?:#*\s*|\b)(?:steps to reproduce|reproduction|proof of concept|poc)\b\s*:?\s*(.+?)(?:impact|mitigation|$)",
 }
 
 
@@ -73,7 +73,11 @@ def extract_section(text: str, pattern: str) -> str:
 	match = re.search(pattern, normalized, flags=re.IGNORECASE | re.DOTALL)
 	if not match:
 		return ""
-	return match.group(1).strip()[:2000]
+	extracted = match.group(1).strip()
+	# Strip leading/trailing markdown characters like #, *, -, _
+	extracted = re.sub(r"^[#\*_\-\s]+", "", extracted)
+	extracted = re.sub(r"[#\*_\-\s]+$", "", extracted)
+	return extracted[:2000]
 
 
 def to_feature_vector(extracted: dict, ocr_signals: dict) -> dict[str, float]:
