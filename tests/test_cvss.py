@@ -14,11 +14,11 @@ def test_parse_cvss_vector_critical():
 
 
 def test_parse_cvss_vector_medium():
-    # AV:N/AC:L/PR:N/UI:R/S:U/C:L/I:L/A:N is CVSS 4.8 (Medium)
+    # AV:N/AC:L/PR:N/UI:R/S:U/C:L/I:L/A:N is CVSS 5.4 (Medium)
     vector_text = "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:L/I:L/A:N"
     res = parse_cvss_vector(vector_text)
     assert res is not None
-    assert res["base_score"] == 4.8
+    assert res["base_score"] == 5.4
 
 
 def test_parse_cvss_vector_invalid():

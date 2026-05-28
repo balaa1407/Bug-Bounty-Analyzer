@@ -163,20 +163,25 @@ def calculate_cvss_score(metrics: dict, vector: str) -> dict:
 
 	exploitability = 8.22 * av * ac * pr * ui
 
+	# CVSS v3.1 standard roundup function
+	def roundup(val):
+		int_val = int(val * 100000)
+		if int_val % 10000 == 0:
+			return int_val / 100000.0
+		else:
+			return (int(int_val / 10000) + 1) / 10.0
+
 	if iss <= 0:
 		base_score = 0.0
 	else:
 		if scope == "U":
-			base_score = min(impact + exploitability, 10.0)
+			base_score = roundup(min(impact + exploitability, 10.0))
 		else:
-			base_score = min(1.08 * (impact + exploitability), 10.0)
-
-	import math
-	rounded_score = math.ceil(base_score * 10) / 10.0
+			base_score = roundup(min(1.08 * (impact + exploitability), 10.0))
 
 	return {
 		"vector": vector,
-		"base_score": min(rounded_score, 10.0),
-		"impact": round(impact, 2),
-		"exploitability": round(exploitability, 2),
+		"base_score": base_score,
+		"impact": round(impact, 1),
+		"exploitability": round(exploitability, 1),
 	}
