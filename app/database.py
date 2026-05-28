@@ -1,3 +1,4 @@
+import threading
 from pymongo import MongoClient
 from pymongo.errors import PyMongoError
 
@@ -8,6 +9,7 @@ class DatabaseClient:
     def __init__(self):
         self.mode = "memory"
         self._memory_reports: list[dict] = []
+        self._lock = threading.Lock()
         self._client = None
         self._collection = None
 
@@ -32,18 +34,21 @@ class DatabaseClient:
                 return
             except PyMongoError:
                 pass
-        self._memory_reports.append(payload)
+        with self._lock:
+            self._memory_reports.append(payload)
 
     def list_reports(self, limit: int = 100) -> list[dict]:
         if self.mode == "mongo" and self._collection is not None:
             docs = self._collection.find({}, {"_id": 0}).sort("created_at", -1).limit(limit)
             return list(docs)
-        return list(reversed(self._memory_reports[-limit:]))
+        with self._lock:
+            return list(reversed(self._memory_reports[-limit:]))
 
     def get_report(self, report_id: str) -> dict | None:
         if self.mode == "mongo" and self._collection is not None:
             return self._collection.find_one({"report_id": report_id}, {"_id": 0})
-        for item in self._memory_reports:
-            if item.get("report_id") == report_id:
-                return item
-        return None
+        with self._lock:
+            for item in self._memory_reports:
+                if item.get("report_id") == report_id:
+                    return item
+            return None
