@@ -10,6 +10,7 @@ from app.quality import assess_report_quality
 from app.remediation import suggest_remediation
 from app.repository import analytics_summary, get_report, list_reports, save_report, storage_mode
 from app.scoring import calculate_risk
+from app.security import sanitize_filename
 from app.utils import to_feature_vector
 from app.validator import validate_files
 
@@ -66,11 +67,11 @@ async def analyze(pdf: UploadFile = File(...),
 
         report_id = str(uuid4())
         
-        file_names = {"pdf": pdf.filename}
+        file_names = {"pdf": sanitize_filename(pdf.filename)}
         if screenshot1:
-            file_names["screenshot1"] = screenshot1.filename
+            file_names["screenshot1"] = sanitize_filename(screenshot1.filename)
         if screenshot2:
-            file_names["screenshot2"] = screenshot2.filename
+            file_names["screenshot2"] = sanitize_filename(screenshot2.filename)
 
         record = {
             "report_id": report_id,
