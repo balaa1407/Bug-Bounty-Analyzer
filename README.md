@@ -4,15 +4,15 @@ MVP project that simulates internal bug bounty triage workflows used by platform
 
 ## Features
 
-- Uploads: one structured vulnerability PDF + two screenshots.
+- Uploads: one structured vulnerability PDF + optional screenshots (0, 1, or 2 screenshots).
 - Input validation: file type, signature, image verification, and size limits.
-- Parsing: extracts vulnerability type, asset, auth requirement, user interaction, environment, impact, and reproduction steps.
-- OCR pipeline: detects database exposure, error messages, sensitive data, and admin panels from screenshots.
-- Hybrid scoring: rule-based CVSS-inspired technical impact + exploitability + business impact.
+- Parsing: extracts vulnerability type, asset, auth requirement, user interaction, environment, impact, reproduction steps, and official CVSS v3.1 vectors.
+- OCR pipeline: detects database exposure, error messages, sensitive data, and admin panels from uploaded screenshots, falling back gracefully if system OCR (Tesseract) is unavailable.
+- Hybrid scoring: rule-based CVSS-inspired technical impact + exploitability + business impact, with dynamic overrides if an official CVSS v3.1 vector is parsed from the report.
 - Severity mapping: Low / Medium / High / Critical with explanation.
-- Quality scoring: PoC clarity, reproducibility, screenshot completeness, and impact clarity.
+- Quality scoring: PoC clarity, reproducibility, screenshot completeness (supports dynamic counts), and impact clarity.
 - Remediation suggestions based on vulnerability type.
-- Persistence and analytics: MongoDB-backed storage with fallback in-memory mode.
+- Persistence and analytics: MongoDB-backed storage with fallback in-memory mode (thread-safe for parallel execution).
 - Dashboard: Streamlit trends, critical reports, and common attack types.
 - Single-page UI: reporter upload form with admin-only analysis visibility.
 
@@ -138,8 +138,8 @@ make clean    # stop and remove volumes
 ## API Endpoints
 
 - `POST /analyze`
-	- multipart fields: `pdf`, `screenshot1`, `screenshot2`
-	- returns extracted fields, OCR signals, feature vector, risk score, quality, remediation
+	- multipart fields: `pdf` (required), `screenshot1` (optional), `screenshot2` (optional)
+	- returns extracted fields, OCR signals, feature vector, risk score (and CVSS details if found), quality, remediation
 - `GET /reports?limit=50`
 - `GET /reports/{report_id}`
 - `GET /analytics/summary`
@@ -154,23 +154,16 @@ curl -X POST "http://localhost:8000/analyze" \
 	-F "screenshot2=@samples/shot2.png"
 ```
 
-## Scoring Model (Rule-Based MVP)
+## Scoring Model & CVSS Override
 
-- `Total Score = Technical Impact + Exploitability + Business Impact`
-- Technical impact driven by vulnerability type (SQLi, RCE, XSS, etc.)
-- Exploitability factors include:
-	- authentication bypass / unauthenticated access
-	- user interaction requirement
-	- production exposure
-	- OCR-detected sensitive data
-- Business impact driven by affected asset domain (payment/admin/user/api)
-
-Severity mapping:
-
-- `0-9`: Low
-- `10-15`: Medium
-- `16-21`: High
-- `22+`: Critical
+- **Base Scoring**: `Total Score = Technical Impact + Exploitability + Business Impact`
+  - Technical impact driven by vulnerability type (SQLi, RCE, XSS, etc.)
+  - Exploitability factors: authentication bypass, user interaction, production environment, and OCR-detected sensitive data.
+  - Business impact driven by affected asset domain (payment/admin/user/api).
+  - Severity mapping: `0-9` (Low), `10-15` (Medium), `16-21` (High), `22+` (Critical).
+- **CVSS Vector Override**: If the PDF report text contains a standard CVSS v3.1 vector (e.g., `CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H`):
+  - The vector is parsed and standard CVSS base score, impact, and exploitability equations are calculated.
+  - The severity and breakdown scores are scaled and overridden dynamically by the CVSS base score.
 
 ## Development Phases
 
@@ -198,8 +191,10 @@ Severity mapping:
 
 ## Tests
 
+To run unit and validation tests:
+
 ```bash
-pytest -q
+python -m pytest -v
 ```
 
-Unit tests include scoring and quality modules for deterministic MVP behavior.
+Tests cover validator logic (PDF & screenshot checking), CVSS parsing, quality score assessment, and risk calculation.
