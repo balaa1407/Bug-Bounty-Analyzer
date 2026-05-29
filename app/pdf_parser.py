@@ -20,7 +20,10 @@ async def parse_pdf_report(pdf_file):
     pdf_bytes = await pdf_file.read()
 
     with pdfplumber.open(BytesIO(pdf_bytes)) as pdf:
-        for page in pdf.pages:
+        for idx, page in enumerate(pdf.pages):
+            if idx >= 15:
+                pdf_text += "\n[Warning: PDF text truncated after 15 pages for security reasons]\n"
+                break
             pdf_text += (page.extract_text() or "") + "\n"
 
     text = normalize_text(pdf_text)
