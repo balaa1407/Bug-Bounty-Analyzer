@@ -2,6 +2,7 @@ from datetime import datetime, timezone
 from uuid import uuid4
 
 from fastapi import FastAPI, File, HTTPException, UploadFile
+from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.config import settings
 from app.ocr import extract_ocr_signals
@@ -15,6 +16,20 @@ from app.utils import to_feature_vector
 from app.validator import validate_files
 
 app = FastAPI(title=settings.app_name, version="0.1.0")
+
+
+class SecurityHeadersMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request, call_next):
+        response = await call_next(request)
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-XSS-Protection"] = "1; mode=block"
+        response.headers["Content-Security-Policy"] = "default-src 'self'"
+        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+        return response
+
+
+app.add_middleware(SecurityHeadersMiddleware)
 
 
 def _ensure_required_report_fields(extracted_fields: dict):
