@@ -4,8 +4,10 @@ import pandas as pd
 import requests
 import streamlit as st
 
+from app.config import settings
+from app.security import verify_password
+
 API_BASE_URL = os.getenv("API_BASE_URL", "http://api:8000")
-ADMIN_PANEL_PASSWORD = os.getenv("ADMIN_PANEL_PASSWORD", "admin123")
 
 st.set_page_config(page_title="Bug Bounty Analyzer", layout="wide")
 st.title("Bug Bounty Vulnerability Report Analyzer")
@@ -72,7 +74,7 @@ with admin_col:
     if not st.session_state["is_admin"]:
         password = st.text_input("Admin password", type="password")
         if st.button("Login as Admin"):
-            if password == ADMIN_PANEL_PASSWORD:
+            if verify_password(password, settings.admin_password_hash):
                 st.session_state["is_admin"] = True
                 st.success("Admin access granted.")
             else:
