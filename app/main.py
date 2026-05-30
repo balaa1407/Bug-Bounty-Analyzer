@@ -12,7 +12,7 @@ from app.remediation import suggest_remediation
 from app.repository import analytics_summary, get_report, list_reports, save_report, storage_mode
 from app.scoring import calculate_risk
 from app.security import sanitize_filename
-from app.utils import to_feature_vector
+from app.utils import to_feature_vector, calculate_jaccard_similarity
 from app.validator import validate_files
 
 app = FastAPI(title=settings.app_name, version="0.1.0")
@@ -104,6 +104,21 @@ async def analyze(request: Request,
         remediation = suggest_remediation(extracted_fields.get("vulnerability_type", "unknown"))
 
         report_id = str(uuid4())
+
+        # Scan for duplicate reports (similarity > 0.65 on raw text)
+        duplicates = []
+        all_reports = list_reports(limit=1000)
+        current_text = extracted_fields.get("raw_pdf_text", "")
+        for old_report in all_reports:
+            old_fields = old_report.get("extracted_fields", {})
+            old_text = old_fields.get("raw_pdf_text", "")
+            if old_text and old_report.get("report_id") != report_id:
+                sim = calculate_jaccard_similarity(current_text, old_text)
+                if sim > 0.65:
+                    duplicates.append({
+                        "report_id": old_report.get("report_id"),
+                        "similarity": round(sim, 2)
+                    })
         
         file_names = {"pdf": sanitize_filename(pdf.filename)}
         if screenshot1:
@@ -123,6 +138,7 @@ async def analyze(request: Request,
             "severity_explanation": score_payload["severity_explanation"],
             "remediation": remediation,
             "quality": quality,
+            "duplicates": duplicates,
         }
 
         save_report(record)
@@ -135,6 +151,7 @@ async def analyze(request: Request,
             "extracted_fields": extracted_fields,
             "ocr_signals": ocr_signals,
             "feature_vector": feature_vector,
+            "duplicates": duplicates,
         }
     except HTTPException:
         raise
