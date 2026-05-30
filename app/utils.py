@@ -185,3 +185,17 @@ def calculate_cvss_score(metrics: dict, vector: str) -> dict:
 		"impact": round(impact, 1),
 		"exploitability": round(exploitability, 1),
 	}
+
+
+def calculate_jaccard_similarity(text1: str, text2: str) -> float:
+	if not text1 and not text2:
+		return 1.0
+	words1 = set(re.findall(r"\w+", normalize_text(text1)))
+	words2 = set(re.findall(r"\w+", normalize_text(text2)))
+
+	if not words1 or not words2:
+		return 0.0
+
+	intersection = words1.intersection(words2)
+	union = words1.union(words2)
+	return len(intersection) / len(union)
