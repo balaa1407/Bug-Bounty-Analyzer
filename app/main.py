@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from uuid import uuid4
 
-from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi import FastAPI, File, HTTPException, UploadFile, Request
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.config import settings
@@ -30,6 +30,24 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
 
 
 app.add_middleware(SecurityHeadersMiddleware)
+
+
+rate_limit_records = {}
+
+
+def check_rate_limit(client_ip: str, limit: int = 10, window_seconds: int = 60) -> bool:
+    import time
+    now = time.time()
+    if client_ip not in rate_limit_records:
+        rate_limit_records[client_ip] = []
+
+    rate_limit_records[client_ip] = [t for t in rate_limit_records[client_ip] if now - t < window_seconds]
+
+    if len(rate_limit_records[client_ip]) >= limit:
+        return False
+
+    rate_limit_records[client_ip].append(now)
+    return True
 
 
 def _ensure_required_report_fields(extracted_fields: dict):
@@ -63,9 +81,14 @@ def root():
 
 
 @app.post("/analyze")
-async def analyze(pdf: UploadFile = File(...),
+async def analyze(request: Request,
+                  pdf: UploadFile = File(...),
                   screenshot1: UploadFile | None = None,
                   screenshot2: UploadFile | None = None):
+    client_ip = request.client.host if request.client else "unknown"
+    if not check_rate_limit(client_ip, limit=10, window_seconds=60):
+        raise HTTPException(status_code=429, detail="Too many requests. Please try again later.")
+
     try:
         await validate_files(pdf, screenshot1, screenshot2)
 
