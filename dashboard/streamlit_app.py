@@ -10,6 +10,56 @@ from app.security import verify_password
 API_BASE_URL = os.getenv("API_BASE_URL", "http://api:8000")
 
 st.set_page_config(page_title="Bug Bounty Analyzer", layout="wide")
+
+# Inject premium dark theme styling
+st.markdown(
+    """
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap');
+    
+    html, body, [class*="css"], .stApp {
+        font-family: 'Outfit', sans-serif;
+    }
+    
+    h1, h2, h3, h4, h5, h6 {
+        font-family: 'Outfit', sans-serif;
+        font-weight: 700 !important;
+        letter-spacing: -0.02em;
+    }
+    
+    /* Premium glassmorphism metrics container */
+    div[data-testid="stMetric"] {
+        background: rgba(26, 28, 35, 0.65);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        padding: 18px 24px;
+        border-radius: 12px;
+        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
+        backdrop-filter: blur(4px);
+        -webkit-backdrop-filter: blur(4px);
+        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    }
+    
+    div[data-testid="stMetric"]:hover {
+        transform: translateY(-4px);
+        border-color: rgba(255, 255, 255, 0.15);
+        box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.3);
+    }
+    
+    /* Custom button styling */
+    .stButton>button {
+        border-radius: 8px !important;
+        font-weight: 600 !important;
+        transition: all 0.2s ease !important;
+    }
+    
+    .stButton>button:hover {
+        transform: scale(1.02);
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
 st.title("Bug Bounty Vulnerability Report Analyzer")
 st.caption("Single-page workflow: reporter upload + admin-only results panel")
 
