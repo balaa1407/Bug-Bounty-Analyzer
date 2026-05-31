@@ -79,31 +79,51 @@ def main():
 
 def _render_result(data: dict):
     st.success("Analysis complete")
-    severity = data.get("severity")
+    severity = data.get("severity", "Low")
     score_breakdown = data.get("score_breakdown", {})
-    total_score = score_breakdown.get("total_score") or data.get("total_score")
+    total_score = score_breakdown.get("total_score") or data.get("total_score") or 0
+
+    severity_styles = {
+        "Critical": "🔴 Critical",
+        "High": "🟠 High",
+        "Medium": "🟡 Medium",
+        "Low": "🟢 Low"
+    }
 
     cols = st.columns(2)
     with cols[0]:
-        st.metric(label="Severity", value=str(severity))
+        st.subheader("Severity Rating")
+        st.markdown(f"### {severity_styles.get(severity, f'⚪ {severity}')}")
     with cols[1]:
-        st.metric(label="Total Score", value=str(total_score))
+        st.subheader("Base Metric")
+        st.metric(label="Risk Score", value=str(total_score))
 
-    with st.expander("Score Breakdown", expanded=True):
-        st.write({k: v for k, v in score_breakdown.items() if k != "total_score"})
+    st.markdown("---")
+    st.subheader("Risk Score Breakdown")
+    c1, c2, c3 = st.columns(3)
+    c1.metric("Technical Impact", str(score_breakdown.get("technical_impact", 0)))
+    c2.metric("Exploitability", str(score_breakdown.get("exploitability", 0)))
+    c3.metric("Business Impact", str(score_breakdown.get("business_impact", 0)))
 
+    explanation = data.get("severity_explanation")
+    if explanation:
+        st.info(explanation)
+
+    duplicates = data.get("duplicates", [])
+    if duplicates:
+        st.warning(f"⚠️ Warning: Found {len(duplicates)} matching reports (Possible Duplicate!)")
+        for dup in duplicates:
+            st.markdown(f"- Report ID: `{dup.get('report_id')}` — Similarity: **{int(dup.get('similarity', 0.0) * 100)}%**")
+
+    st.markdown("---")
     extracted = data.get("extracted_fields", {})
-    with st.expander("Extracted Fields", expanded=False):
+    with st.expander("Extracted Report Fields", expanded=False):
         st.write(extracted)
 
     ocr = data.get("ocr_signals", {})
     if ocr:
-        with st.expander("OCR Signals", expanded=False):
+        with st.expander("OCR Image Signals", expanded=False):
             st.write(ocr)
-
-    explanation = data.get("explanation")
-    if explanation:
-        st.info(explanation)
 
     rem = data.get("remediation", [])
     if rem:
