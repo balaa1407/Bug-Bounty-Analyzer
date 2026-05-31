@@ -143,23 +143,29 @@ with admin_col:
             c2.metric("Critical Reports", len(summary.get("critical_vulnerabilities", [])))
             c3.metric("Tracked Attack Types", len(summary.get("common_attack_types", {})))
 
-            st.subheader("Severity Distribution")
-            sev_df = pd.DataFrame(
-                list(summary.get("severity_distribution", {}).items()),
-                columns=["Severity", "Count"],
-            )
-            if not sev_df.empty:
-                st.bar_chart(sev_df.set_index("Severity"))
-            else:
-                st.info("No reports available yet.")
+            chart_col1, chart_col2 = st.columns(2)
 
-            st.subheader("Common Attack Types")
-            type_df = pd.DataFrame(
-                list(summary.get("common_attack_types", {}).items()),
-                columns=["Attack Type", "Count"],
-            )
-            if not type_df.empty:
-                st.dataframe(type_df, use_container_width=True)
+            with chart_col1:
+                st.subheader("Severity Distribution")
+                sev_df = pd.DataFrame(
+                    list(summary.get("severity_distribution", {}).items()),
+                    columns=["Severity", "Count"],
+                )
+                if not sev_df.empty:
+                    st.bar_chart(sev_df.set_index("Severity"))
+                else:
+                    st.info("No reports available yet.")
+
+            with chart_col2:
+                st.subheader("Common Attack Types")
+                type_df = pd.DataFrame(
+                    list(summary.get("common_attack_types", {}).items()),
+                    columns=["Attack Type", "Count"],
+                )
+                if not type_df.empty:
+                    st.bar_chart(type_df.set_index("Attack Type"))
+                else:
+                    st.info("No attack types tracked yet.")
 
             st.subheader("Recent Reports")
             if reports:
