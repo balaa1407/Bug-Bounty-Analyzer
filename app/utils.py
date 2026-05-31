@@ -199,3 +199,66 @@ def calculate_jaccard_similarity(text1: str, text2: str) -> float:
 	intersection = words1.intersection(words2)
 	union = words1.union(words2)
 	return len(intersection) / len(union)
+
+
+def generate_audit_markdown(record: dict) -> str:
+	vuln = record.get("extracted_fields", {}).get("vulnerability_type", "unknown").upper()
+	report_id = record.get("report_id", "N/A")
+	created_at = record.get("created_at", "")
+	severity = record.get("severity", "Low")
+	score_breakdown = record.get("score_breakdown", {})
+	total_score = score_breakdown.get("total_score", 0)
+
+	md = f"""# VULNERABILITY AUDIT REPORT — {vuln}
+Reference ID: {report_id}
+Generated on: {created_at}
+
+## 📊 Risk Evaluation
+- **Severity**: **{severity}**
+- **Risk Score**: **{total_score}/30**
+- **Technical Impact**: {score_breakdown.get("technical_impact", 0)}/10
+- **Exploitability**: {score_breakdown.get("exploitability", 0)}/10
+- **Business Impact**: {score_breakdown.get("business_impact", 0)}/10
+
+### Severity Rationale
+{record.get("severity_explanation", "Calculated based on asset priority and environment parameters.")}
+
+## 📝 Analysis Details
+- **Affected Asset**: `{record.get("extracted_fields", {}).get("affected_asset", "unknown")}`
+- **Authentication Required**: {'Yes' if record.get("extracted_fields", {}).get("authentication_required", True) else 'No'}
+- **User Interaction Required**: {'Yes' if record.get("extracted_fields", {}).get("user_interaction_required", False) else 'No'}
+- **Target Environment**: `{record.get("extracted_fields", {}).get("environment", "unknown")}`
+
+### Steps to Reproduce
+{record.get("extracted_fields", {}).get("steps_to_reproduce", "No steps extracted.")}
+
+### Impact Description
+{record.get("extracted_fields", {}).get("impact_description", "No impact details extracted.")}
+
+"""
+
+	ocr = record.get("ocr_signals", {})
+	if ocr:
+		md += f"""## 🔍 OCR Verification Flags
+- Database exposure detected: {'🔴 YES' if ocr.get("database_exposure") else '🟢 NO'}
+- Error messages detected: {'🔴 YES' if ocr.get("error_messages") else '🟢 NO'}
+- Sensitive data exposed: {'🔴 YES' if ocr.get("sensitive_data") else '🟢 NO'}
+- Admin panels exposed: {'🔴 YES' if ocr.get("admin_panels") else '🟢 NO'}
+
+"""
+
+	dups = record.get("duplicates", [])
+	if dups:
+		md += "## ⚠️ Duplicate Analysis Alerts\n"
+		md += "This report matches existing submissions in our archive:\n"
+		for dup in dups:
+			md += f"- **Duplicate of**: `{dup['report_id']}` (Similarity: **{int(dup['similarity'] * 100)}%**)\n"
+		md += "\n"
+
+	rem = record.get("remediation", [])
+	if rem:
+		md += "## 🛡️ Remediation Plan\n"
+		for idx, step in enumerate(rem, 1):
+			md += f"{idx}. {step}\n"
+
+	return md
