@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from uuid import uuid4
 
-from fastapi import FastAPI, File, HTTPException, UploadFile, Request
+from fastapi import FastAPI, File, HTTPException, UploadFile, Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.config import settings
@@ -12,7 +12,7 @@ from app.remediation import suggest_remediation
 from app.repository import analytics_summary, get_report, list_reports, save_report, storage_mode
 from app.scoring import calculate_risk
 from app.security import sanitize_filename
-from app.utils import to_feature_vector, calculate_jaccard_similarity
+from app.utils import to_feature_vector, calculate_jaccard_similarity, generate_audit_markdown
 from app.validator import validate_files
 
 app = FastAPI(title=settings.app_name, version="0.1.0")
@@ -171,6 +171,22 @@ def get_report_by_id(report_id: str):
     if not report:
         raise HTTPException(status_code=404, detail="Report not found")
     return report
+
+
+@app.get("/reports/{report_id}/export")
+def export_report(report_id: str):
+    report = get_report(report_id)
+    if not report:
+        raise HTTPException(status_code=404, detail="Report not found")
+    
+    markdown_content = generate_audit_markdown(report)
+    filename = f"audit_report_{report_id}.md"
+    
+    return Response(
+        content=markdown_content,
+        media_type="text/markdown",
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
+    )
 
 
 @app.get("/analytics/summary")
