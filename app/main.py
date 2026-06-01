@@ -160,8 +160,8 @@ async def analyze(request: Request,
 
 
 @app.get("/reports")
-def get_reports(limit: int = 50):
-    items = list_reports(limit=limit)
+def get_reports(skip: int = 0, limit: int = 50, severity: str | None = None):
+    items = list_reports(skip=skip, limit=limit, severity=severity)
     return {"items": items, "count": len(items)}
 
 
