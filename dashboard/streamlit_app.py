@@ -190,6 +190,18 @@ with admin_col:
                     details = requests.get(f"{API_BASE_URL}/reports/{selected_id}", timeout=10)
                     if details.status_code == 200:
                         st.json(details.json())
+                        try:
+                            rexport = requests.get(f"{API_BASE_URL}/reports/{selected_id}/export", timeout=10)
+                            if rexport.ok:
+                                st.download_button(
+                                    label="📥 Export Report to Markdown",
+                                    data=rexport.text,
+                                    file_name=f"audit_report_{selected_id}.md",
+                                    mime="text/markdown",
+                                    key="admin_download_btn"
+                                )
+                        except Exception as e:
+                            st.caption(f"Could not load export link: {e}")
                     else:
                         st.warning("Report not found.")
             else:

@@ -131,6 +131,22 @@ def _render_result(data: dict):
         for item in rem:
             st.write(f"• {item}")
 
+    report_id = data.get("report_id")
+    if report_id:
+        st.markdown("---")
+        st.subheader("Export Vulnerability Audit")
+        try:
+            r = requests.get(f"{API_BASE_URL}/reports/{report_id}/export", timeout=10)
+            if r.ok:
+                st.download_button(
+                    label="📥 Download Markdown Audit Report",
+                    data=r.text,
+                    file_name=f"audit_report_{report_id}.md",
+                    mime="text/markdown"
+                )
+        except Exception as e:
+            st.caption(f"Could not retrieve export: {e}")
+
 
 def _guess_mime(name: str) -> str:
     name_lower = (name or "").lower()
