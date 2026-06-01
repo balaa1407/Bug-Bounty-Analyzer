@@ -72,8 +72,11 @@ def fetch_summary():
 
 
 @st.cache_data(ttl=20)
-def fetch_reports():
-    response = requests.get(f"{API_BASE_URL}/reports?limit=200", timeout=10)
+def fetch_reports(skip: int = 0, limit: int = 50, severity: str | None = None):
+    url = f"{API_BASE_URL}/reports?skip={skip}&limit={limit}"
+    if severity and severity != "All":
+        url += f"&severity={severity}"
+    response = requests.get(url, timeout=10)
     response.raise_for_status()
     return response.json().get("items", [])
 
@@ -136,7 +139,6 @@ with admin_col:
 
         try:
             summary = fetch_summary()
-            reports = fetch_reports()
 
             c1, c2, c3 = st.columns(3)
             c1.metric("Total Reports", summary.get("total_reports", 0))
@@ -166,6 +168,18 @@ with admin_col:
                     st.bar_chart(type_df.set_index("Attack Type"))
                 else:
                     st.info("No attack types tracked yet.")
+
+            st.markdown("---")
+            st.subheader("Filter and Search Reports")
+            f_col1, f_col2, f_col3 = st.columns(3)
+            with f_col1:
+                sel_severity = st.selectbox("Severity Rating", ["All", "Low", "Medium", "High", "Critical"])
+            with f_col2:
+                sel_limit = st.number_input("Page Limit", min_value=1, max_value=200, value=20)
+            with f_col3:
+                sel_skip = st.number_input("Skip Offset", min_value=0, value=0)
+
+            reports = fetch_reports(skip=sel_skip, limit=sel_limit, severity=sel_severity)
 
             st.subheader("Recent Reports")
             if reports:
