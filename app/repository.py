@@ -14,8 +14,8 @@ def save_report(record: dict) -> str:
     return report_id
 
 
-def list_reports(limit: int = 100) -> list[dict]:
-    return db_client.list_reports(limit)
+def list_reports(skip: int = 0, limit: int = 100, severity: str | None = None) -> list[dict]:
+    return db_client.list_reports(skip, limit, severity)
 
 
 def get_report(report_id: str) -> dict | None:

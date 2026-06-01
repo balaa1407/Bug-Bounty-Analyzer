@@ -37,12 +37,20 @@ class DatabaseClient:
         with self._lock:
             self._memory_reports.append(payload)
 
-    def list_reports(self, limit: int = 100) -> list[dict]:
+    def list_reports(self, skip: int = 0, limit: int = 100, severity: str | None = None) -> list[dict]:
+        query = {}
+        if severity:
+            query["severity"] = severity
+
         if self.mode == "mongo" and self._collection is not None:
-            docs = self._collection.find({}, {"_id": 0}).sort("created_at", -1).limit(limit)
+            docs = self._collection.find(query, {"_id": 0}).sort("created_at", -1).skip(skip).limit(limit)
             return list(docs)
         with self._lock:
-            return list(reversed(self._memory_reports[-limit:]))
+            filtered = self._memory_reports
+            if severity:
+                filtered = [r for r in filtered if r.get("severity") == severity]
+            reversed_list = list(reversed(filtered))
+            return reversed_list[skip : skip + limit]
 
     def get_report(self, report_id: str) -> dict | None:
         if self.mode == "mongo" and self._collection is not None:
