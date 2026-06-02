@@ -9,11 +9,13 @@ MVP project that simulates internal bug bounty triage workflows used by platform
 - Parsing: extracts vulnerability type, asset, auth requirement, user interaction, environment, impact, reproduction steps, and official CVSS v3.1 vectors.
 - OCR pipeline: detects database exposure, error messages, sensitive data, and admin panels from uploaded screenshots, falling back gracefully if system OCR (Tesseract) is unavailable.
 - Hybrid scoring: rule-based CVSS-inspired technical impact + exploitability + business impact, with dynamic overrides if an official CVSS v3.1 vector is parsed from the report.
+- Duplicate Scan Engine: Jaccard text similarity checks against historical archive to prevent double submissions.
+- Export System: generates and serves downloadable Markdown audit reports of vulnerability findings.
 - Severity mapping: Low / Medium / High / Critical with explanation.
 - Quality scoring: PoC clarity, reproducibility, screenshot completeness (supports dynamic counts), and impact clarity.
 - Remediation suggestions based on vulnerability type.
 - Persistence and analytics: MongoDB-backed storage with fallback in-memory mode (thread-safe for parallel execution).
-- Dashboard: Streamlit trends, critical reports, and common attack types.
+- Dashboard: Streamlit trends, critical reports, and common attack types with dark-theme styles, filters, and pagination offsets.
 - Single-page UI: reporter upload form with admin-only analysis visibility.
 
 ## Project Structure
@@ -139,9 +141,12 @@ make clean    # stop and remove volumes
 
 - `POST /analyze`
 	- multipart fields: `pdf` (required), `screenshot1` (optional), `screenshot2` (optional)
-	- returns extracted fields, OCR signals, feature vector, risk score (and CVSS details if found), quality, remediation
-- `GET /reports?limit=50`
+	- returns extracted fields, OCR signals, duplicate list, and risk score.
+- `GET /reports?skip=0&limit=50&severity=High`
+	- returns a list of records with support for skip/limit offset pagination and severity filtering.
 - `GET /reports/{report_id}`
+- `GET /reports/{report_id}/export`
+	- downloads a clean Markdown summary audit report.
 - `GET /analytics/summary`
 - `GET /health`
 
